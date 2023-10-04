@@ -54,7 +54,7 @@ modules:
 
 
   - name: 开启指纹识别消息推送
-    parallel: true
+    parallel: false
     cmds:
         - ( docker run -d --rm --network host -v "$(pwd)":/tools/ -w /tools/  --name observer_ward_notify1  ayuxy/tools-observer_ward_notify -f {{YamlName}} ) >/dev/null 2>&1
     silent: false
