@@ -2,7 +2,7 @@ modules:
   - name: 过滤域名
     parallel: false
     cmds:
-        - docker run --rm --network host -v "$(pwd)":/tools/  --name morefind1 ayuxy/tools-morefind -d -f {{file}}  | docker run --rm -i --network host -v "$(pwd)":/tools/ -w /tools/ --name httpx1 ayuxy/tools-httpx -o Domain.txt
+        - docker run --rm --network host -v "$(pwd)":/tools/  --name morefind1 ayuxy/tools-morefind -d -f {{file}}  | docker run --rm -i --network host -v "$(pwd)":/tools/ -w /tools/ --name httpx1 ayuxy/tools-httpx -silent  -o Domain.txt
     silent: false
     ctrlc:
         - docker kill morefind1 httpx1 >/dev/null 2>&1
@@ -13,8 +13,8 @@ modules:
         - docker run --rm --network host -v "$(pwd)":/tools/ --name morefind2 ayuxy/tools-morefind -d --root -f {{file}}  | docker run --rm -i --network host -v "$(pwd)":/tools/ -w /tools/ --name subfinder1 ayuxy/tools-subfinder -silent | docker run --rm -i --network host -v "$(pwd)":/tools/ -w /tools/ --name httpx2 ayuxy/tools-httpx -silent -o SubDomain.txt
         - |
           line_count=$(wc -l < "SubDomain.txt")          
-          echo "子域名扫描完成,收集到存活子域名共 $line_count 条,具体信息如下:" | docker run --rm -i -v $(pwd):/tools --name notify1 ayuxy/tools-notify -pc {{YamlName}} -id slack  -bulk           
-        - docker run --rm -v $(pwd):/tools --name notify2 ayuxy/tools-notify -pc {{YamlName}} -data SubDomain.txt -id slack  -bulk 
+          echo "子域名扫描完成,收集到存活子域名共 $line_count 条,具体信息如下:" | docker run --rm -i -v $(pwd):/tools --name notify1 ayuxy/tools-notify -pc {{YamlName}} -id slack  -bulk -silent
+        - docker run --rm -v $(pwd):/tools --name notify2 ayuxy/tools-notify -pc {{YamlName}} -data SubDomain.txt -id slack  -bulk -silent
     silent: false
     ctrlc:
         - docker kill morefind2 subfinder1 httpx2 notify1 notify2 >/dev/null 2>&1
@@ -22,11 +22,11 @@ modules:
   - name: 端口扫描
     parallel: false
     cmds:
-        - docker run --rm --network host -v "$(pwd)":/tools/ --name morefind3 ayuxy/tools-morefind -d -f SubDomain.txt | docker run --rm -i --network host -v "$(pwd)":/tools/ --name naabu1 -w /tools/ ayuxy/tools-naabu -list SubDomain.txt -top-ports 1000 -o SubDomain_Port.txt
+        - docker run --rm --network host -v "$(pwd)":/tools/ --name morefind3 ayuxy/tools-morefind -d -f SubDomain.txt | docker run --rm -i --network host -v "$(pwd)":/tools/ --name naabu1 -w /tools/ ayuxy/tools-naabu -list SubDomain.txt -top-ports 1000 -o SubDomain_Port.txt -silent
         - |
           line_count=$(wc -l < "SubDomain_Port.txt")          
-          echo "端口扫描完成，收集到信息共 $line_count 条,具体信息如下:" | docker run --rm -i -v $(pwd):/tools --name notify3 ayuxy/tools-notify -pc {{YamlName}} -id slack  -bulk           
-        - docker run --rm -v $(pwd):/tools --name notify4 ayuxy/tools-notify -pc {{YamlName}} -data SubDomain_Port.txt -id slack  -bulk 
+          echo "端口扫描完成，收集到信息共 $line_count 条,具体信息如下:" | docker run --rm -i -v $(pwd):/tools --name notify3 ayuxy/tools-notify -pc {{YamlName}} -id slack  -bulk -silent
+        - docker run --rm -v $(pwd):/tools --name notify4 ayuxy/tools-notify -pc {{YamlName}} -data SubDomain_Port.txt -id slack  -bulk -silent
     silent: false
     ctrlc:
         - docker kill morefind3 naabu1 notify3 notify4 >/dev/null 2>&1
@@ -35,7 +35,7 @@ modules:
   - name: 目录扫描
     parallel: false
     cmds:
-        - docker run --rm -it --network host -v "$(pwd)":/tools/ -w /tools/ --name dirsearch1 ayuxy/tools-dirsearch  -l SubDomain_Port.txt --exclude-status 405,404,402,401,400,500,501,502,503,504,505 --random-agent --format=html -o Dirsearch_Report.html
+        - docker run --rm -it --network host -v "$(pwd)":/tools/ -w /tools/ --name dirsearch1 ayuxy/tools-dirsearch -q -l SubDomain_Port.txt --exclude-status 405,404,402,401,400,500,501,502,503,504,505 --random-agent --format=html -o Dirsearch_Report.html
     silent: false
     ctrlc:
         - docker kill dirsearch1 >/dev/null 2>&1
@@ -46,17 +46,17 @@ modules:
         - docker run --rm -v "$(pwd)":/tools/ -w /tools/ --name dirsearch_url_filter1 ayuxy/tools-dirsearch_url_filter -f Dirsearch_Report.html -o Filter_url.txt
         - |
           line_count=$(wc -l < "Filter_url.txt")          
-          echo "目录扫描完成,过滤掉疑似无效URL后,收集到URL共 $line_count 条,具体信息如下:" | docker run --rm -i -v $(pwd):/tools --name notify5 ayuxy/tools-notify -pc {{YamlName}} -id slack  -bulk           
-        - docker run --rm -v $(pwd):/tools --name notify6 ayuxy/tools-notify -pc {{YamlName}} -data Filter_url.txt -id slack  -bulk          
+          echo "目录扫描完成,过滤掉疑似无效URL后,收集到URL共 $line_count 条,具体信息如下:" | docker run --rm -i -v $(pwd):/tools --name notify5 ayuxy/tools-notify -pc {{YamlName}} -id slack  -bulk -silent
+        - docker run --rm -v $(pwd):/tools --name notify6 ayuxy/tools-notify -pc {{YamlName}} -data Filter_url.txt -id slack  -bulk  -silent        
     silent: false
     ctrlc:
         - docker kill dirsearch_url_filter1 notify5 notify6 >/dev/null 2>&1
 
 
-  - name: 指纹识别消息推送服务
+  - name: 指纹识别消息推送
     parallel: true
     cmds:
-        - docker run --rm --network host --name observer_ward_notify1  ayuxy/tools-observer_ward_notify -f {{YamlName}}
+        - docker run --rm --network host -v "$(pwd)":/tools/ -w /tools/ --name observer_ward_notify1  ayuxy/tools-observer_ward_notify -f {{YamlName}}
     silent: false
     ctrlc:
         - docker kill observer_ward_notify1 >/dev/null 2>&1
@@ -64,21 +64,26 @@ modules:
   - name: 指纹识别
     parallel: false
     cmds:
-        - docker run --rm -i --network host -v observer_ward_data-volume:/root/ -v "$(pwd)":/tools/ -w /tools/ --name observer_ward1  ayuxy/tools-observer_ward -f Filter_url.txt  --path /plugins --nargs "-etags mod-proxy" -c Observer_ward_result.csv --webhook http://127.0.0.1:5000/slack
+        - docker run --rm -i --network host -v observer_ward_data-volume:/root/ -v "$(pwd)":/tools/ -w /tools/ --name observer_ward1  ayuxy/tools-observer_ward -f Filter_url.txt  --path /plugins --nargs "-etags mod-proxy" -c Observer_ward_result.csv --webhook http://127.0.0.1:5000/slack 
         - sleep 2
-        - docker kill observer_ward_notify1 >/dev/null 2>&1
+        - docker kill observer_ward_notify1 >/dev/null 2>&1                
     silent: false
     ctrlc:
         - docker kill observer_ward1 >/dev/null 2>&1
         
                 
 
-
-
 # notify设置
+telegram:
+  - id: "tel"
+    telegram_api_key: "6683228193:AAGOCsRg4jaQ3tuiXE05RIBvokI-Ihj_6JE"
+    telegram_chat_id: "-4034325192"
+    telegram_format: "{{data}}"
+    telegram_parsemode: "Markdown" # None/Markdown/MarkdownV2/HTML (https://core.telegram.org/bots/api#formatting-options)
+
 slack:
   - id: "slack"
     slack_channel: "recon"
     slack_username: "test"
     slack_format: "{{data}}"
-    slack_webhook_url: "xxxxxxxxxxxxxxxxxxx"
+    slack_webhook_url: "https://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
