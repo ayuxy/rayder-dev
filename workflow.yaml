@@ -35,7 +35,7 @@ modules:
   - name: 目录扫描
     parallel: false
     cmds:
-        - docker run --rm -it --network host -v "$(pwd)":/tools/ -w /tools/ --name dirsearch1 ayuxy/tools-dirsearch -q -l SubDomain_Port.txt --exclude-status 405,404,402,401,400,500,501,502,503,504,505 --random-agent --format=html -o Dirsearch_Report.html
+        - docker run --rm -it --network host -v "$(pwd)":/tools/ -w /tools/ --name dirsearch1 ayuxy/tools-dirsearch -l SubDomain_Port.txt --exclude-status 405,404,402,401,400,500,501,502,503,504,505 --random-agent --format=html -o Dirsearch_Report.html
     silent: false
     ctrlc:
         - docker kill dirsearch1 >/dev/null 2>&1
@@ -86,4 +86,4 @@ slack:
     slack_channel: "recon"
     slack_username: "test"
     slack_format: "{{data}}"
-    slack_webhook_url: "https://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    slack_webhook_url: "https://hooks.slack.com/services/xxxxx/xxxxxxxxxxxxxxxxxxxx"
