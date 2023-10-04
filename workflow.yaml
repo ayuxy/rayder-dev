@@ -74,13 +74,6 @@ modules:
                 
 
 # notify设置
-telegram:
-  - id: "tel"
-    telegram_api_key: "6683228193:AAGOCsRg4jaQ3tuiXE05RIBvokI-Ihj_6JE"
-    telegram_chat_id: "-4034325192"
-    telegram_format: "{{data}}"
-    telegram_parsemode: "Markdown" # None/Markdown/MarkdownV2/HTML (https://core.telegram.org/bots/api#formatting-options)
-
 slack:
   - id: "slack"
     slack_channel: "recon"
