@@ -53,10 +53,10 @@ modules:
         - docker kill dirsearch_url_filter1 notify5 notify6 >/dev/null 2>&1
 
 
-  - name: 指纹识别消息推送
+  - name: 开启指纹识别消息推送
     parallel: true
     cmds:
-        - docker run --rm --network host -v "$(pwd)":/tools/ -w /tools/ --name observer_ward_notify1  ayuxy/tools-observer_ward_notify -f {{YamlName}}
+        - ( docker run -d --rm --network host -v "$(pwd)":/tools/ -w /tools/  --name observer_ward_notify1  ayuxy/tools-observer_ward_notify -f {{YamlName}} ) >/dev/null 2>&1
     silent: false
     ctrlc:
         - docker kill observer_ward_notify1 >/dev/null 2>&1
@@ -86,4 +86,4 @@ slack:
     slack_channel: "recon"
     slack_username: "test"
     slack_format: "{{data}}"
-    slack_webhook_url: "https://hooks.slack.com/services/xxxxx/xxxxxxxxxxxxxxxxxxxx"
+    slack_webhook_url: "https://hooks.slack.com/services/xxxxxxxxxxxxxxxxxxxxxxxxxx"
